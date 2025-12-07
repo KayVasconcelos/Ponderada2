@@ -2,73 +2,74 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Meu Primeiro Jogo AR com A-Frame</title>
+    <title>VR 360 Shooter</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-    
-    <style>
-        /* Estilo simples para o placar na tela */
-        #placar {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            color: white;
-            font-family: Arial, sans-serif;
-            font-size: 20px;
-            z-index: 10;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 10px;
-            border-radius: 5px;
-        }
-    </style>
+    <script src="https://unpkg.com/aframe-environment-component@1.3.1/dist/aframe-environment-component.min.js"></script>
 </head>
-<body style="margin: 0; overflow: hidden;">
+<body>
 
-    <div id="placar">Pontos: <span id="pontos">0</span></div>
-
-    <a-scene embedded arjs>
+    <a-scene>
         
-        <a-entity cursor="rayOrigin: mouse" raycaster="objects: .clicavel"></a-entity>
+        <a-entity environment="preset: tron; skyColor: #111; grid: none"></a-entity>
 
-        <a-marker preset="hiro">
-            
-            <a-box id="caixa-alvo" 
-                   position="0 0.5 0" 
-                   material="color: yellow; opacity: 0.9"
-                   animation="property: rotation; to: 0 360 0; loop: true; dur: 3000"
-                   class="clicavel">
-            </a-box>
+        <a-text id="placar" value="Pontos: 0" position="-1 2.5 -3" color="white" width="10"></a-text>
 
-        </a-marker>
+        <a-camera>
+            <a-cursor color="red" fuse="true" fuse-timeout="500"
+                      animation__fusing="property: scale; from: 1 1 1; to: 0.1 0.1 0.1; startEvents: fusing; dur: 500"
+                      animation__reset="property: scale; to: 1 1 1; startEvents: mouseleave">
+            </a-cursor>
+        </a-camera>
 
-        <a-entity camera></a-entity>
+        <a-entity id="inimigos-container"></a-entity>
+
     </a-scene>
 
     <script>
-        // Pegamos a referência dos elementos
-        const caixa = document.querySelector('#caixa-alvo');
-        const displayPontos = document.querySelector('#pontos');
         let pontos = 0;
+        const textoPlacar = document.querySelector('#placar');
+        const container = document.querySelector('#inimigos-container');
 
-        // Adicionamos um "ouvinte" para o evento de clique na caixa
-        caixa.addEventListener('click', function () {
-            // 1. Aumenta os pontos
-            pontos++;
-            displayPontos.innerText = pontos;
-
-            // 2. Muda a cor para dar feedback visual
-            // Gera uma cor aleatória
-            const corAleatoria = '#' + Math.floor(Math.random()*16777215).toString(16);
-            caixa.setAttribute('material', 'color', corAleatoria);
-
-            // 3. Efeito simples de escala (pula)
-            caixa.setAttribute('animation__scale', 'property: scale; to: 1.2 1.2 1.2; dur: 200; yoyo: true; loop: 1');
+        // Função para criar um inimigo
+        function criarInimigo() {
+            const inimigo = document.createElement('a-sphere');
             
-            // Retorna ao tamanho normal após a animação
-            setTimeout(() => {
-                caixa.setAttribute('scale', '1 1 1');
-            }, 400);
-        });
+            // Posição aleatória ao redor do jogador (X e Z)
+            const x = (Math.random() - 0.5) * 20; // Entre -10 e 10
+            const y = Math.random() * 3 + 1;      // Altura entre 1m e 4m
+            const z = (Math.random() - 0.5) * 20; // Entre -10 e 10
+
+            // Configurações visuais do inimigo
+            inimigo.setAttribute('position', `${x} ${y} ${z}`);
+            inimigo.setAttribute('radius', '1');
+            inimigo.setAttribute('color', '#FF0000'); // Vermelho
+            
+            // Animação para ele "pulsar"
+            inimigo.setAttribute('animation', 'property: scale; to: 1.2 1.2 1.2; dir: alternate; loop: true; dur: 500');
+
+            // Adiciona evento de clique (ou olhar fixo)
+            inimigo.addEventListener('click', () => {
+                // Toca som (opcional, simulado visualmente aqui)
+                
+                // Remove o inimigo da cena
+                inimigo.parentNode.removeChild(inimigo);
+
+                // Aumenta pontos
+                pontos += 10;
+                textoPlacar.setAttribute('value', `Pontos: ${pontos}`);
+
+                // Cria um novo inimigo imediatamente para o jogo não acabar
+                criarInimigo();
+            });
+
+            // Adiciona o inimigo na cena
+            container.appendChild(inimigo);
+        }
+
+        // Começa o jogo criando 5 inimigos iniciais
+        for (let i = 0; i < 5; i++) {
+            criarInimigo();
+        }
     </script>
 </body>
 </html>
